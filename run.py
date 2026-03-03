@@ -30,6 +30,9 @@ async def main():
         print("=" * 70)
 
         step = 0
+        llm_calls = 0
+        tool_calls_count = 0
+
         async for chunk in agent.astream(
             {"messages": [{"role": "user", "content": q}]},
             config=config,
@@ -46,14 +49,16 @@ async def main():
 
                     # THOUGHT — LLM reasoning + deciding to call a tool
                     if msg_type == "ai":
+                        llm_calls += 1
                         if msg.content:
-                            print(f"\n[Step {step}] THOUGHT:")
+                            print(f"\n[Step {step}] THOUGHT (LLM call #{llm_calls}):")
                             print(f"  {msg.content}")
 
                         tool_calls = getattr(msg, "tool_calls", [])
                         if tool_calls:
                             for tc in tool_calls:
-                                print(f"\n[Step {step}] ACTION: call tool '{tc['name']}'")
+                                tool_calls_count += 1
+                                print(f"\n[Step {step}] ACTION (tool call #{tool_calls_count}): '{tc['name']}'")
                                 code = tc["args"].get("query", "")
                                 print(f"  Code:\n  ┌{'─'*50}")
                                 for line in code.splitlines():
@@ -68,7 +73,9 @@ async def main():
                         for line in content.splitlines():
                             print(f"  > {line}")
 
-        print("\n")
+        print(f"\n{'─'*70}")
+        print(f"  STATS: {llm_calls} LLM call(s)  |  {tool_calls_count} tool call(s)  |  {step} total step(s)")
+        print(f"{'─'*70}\n")
 
 
 if __name__ == "__main__":
