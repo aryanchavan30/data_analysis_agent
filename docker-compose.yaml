@@ -3,10 +3,13 @@ services:
     build:
       context: ./snekbox
       dockerfile: Dockerfile
+    privileged: true
     ports:
       - "8060:8060"
     volumes:
       - ./data/uploads:/data:ro
+    tmpfs:
+      - /sys/fs/cgroup:rw
     deploy:
       resources:
         limits:
