@@ -18,9 +18,12 @@ class SessionData:
     created_at: datetime = field(default_factory=datetime.utcnow)
     dataframes: dict[str, pd.DataFrame] = field(default_factory=dict)
     file_paths: dict[str, str] = field(default_factory=dict)
+    file_encodings: dict[str, str] = field(default_factory=dict)
 
-    def add_dataframe(self, name: str, df: pd.DataFrame, file_path: str = "") -> str:
-        """Sanitize name, store DF and file path. Returns sanitized name."""
+    def add_dataframe(
+        self, name: str, df: pd.DataFrame, file_path: str = "", encoding: str = "utf-8",
+    ) -> str:
+        """Sanitize name, store DF, file path, and encoding. Returns sanitized name."""
         if len(self.dataframes) >= MAX_FILES_PER_SESSION:
             raise ValueError(
                 f"Session limit reached: max {MAX_FILES_PER_SESSION} files per session."
@@ -33,6 +36,7 @@ class SessionData:
         self.dataframes[safe_name] = df
         if file_path:
             self.file_paths[safe_name] = file_path
+            self.file_encodings[safe_name] = encoding
         return safe_name
 
     def get_setup_code(self) -> str:
@@ -51,8 +55,11 @@ class SessionData:
             import os
             container_path = "/data/" + os.path.basename(fpath)
             ext = os.path.splitext(fpath)[1].lower()
+            enc = self.file_encodings.get(var_name, "utf-8")
             if ext == ".csv":
-                lines.append(f'{var_name} = pd.read_csv("{container_path}")')
+                lines.append(
+                    f'{var_name} = pd.read_csv("{container_path}", encoding="{enc}")'
+                )
             else:
                 lines.append(f'{var_name} = pd.read_excel("{container_path}")')
         return "\n".join(lines)

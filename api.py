@@ -120,20 +120,43 @@ async def upload_file(session_id: str, file: UploadFile = File(...)):
     save_path = UPLOAD_DIR / f"{session_id}_{filename}"
     save_path.write_bytes(content)
 
-    # Parse into DataFrame
-    try:
-        if ext == ".csv":
-            df = pd.read_csv(save_path)
-        else:
-            df = pd.read_excel(save_path)
-    except Exception as e:
-        save_path.unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail=f"Failed to parse file: {e}")
+    # Parse into DataFrame (try multiple encodings for CSV)
+    df = None
+    used_encoding = "utf-8"
 
-    # Register in session (with file path for Snekbox mounting)
+    if ext == ".csv":
+        CSV_ENCODINGS = ["utf-8", "utf-8-sig", "latin-1", "cp1252", "iso-8859-1"]
+        errors: list[str] = []
+        for enc in CSV_ENCODINGS:
+            try:
+                df = pd.read_csv(save_path, encoding=enc)
+                used_encoding = enc
+                break
+            except UnicodeDecodeError:
+                errors.append(f"{enc}: UnicodeDecodeError")
+            except Exception as e:
+                save_path.unlink(missing_ok=True)
+                raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
+
+        if df is None:
+            save_path.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to parse CSV with any encoding. Tried: {', '.join(CSV_ENCODINGS)}",
+            )
+    else:
+        try:
+            df = pd.read_excel(save_path)
+        except Exception as e:
+            save_path.unlink(missing_ok=True)
+            raise HTTPException(status_code=400, detail=f"Failed to parse Excel file: {e}")
+
+    # Register in session (with file path + encoding for Snekbox mounting)
     stem = Path(filename).stem
     try:
-        var_name = session.add_dataframe(stem, df, file_path=str(save_path))
+        var_name = session.add_dataframe(
+            stem, df, file_path=str(save_path), encoding=used_encoding,
+        )
     except ValueError as e:
         save_path.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail=str(e))
