@@ -44,6 +44,17 @@ SNEKBOX_TIMEOUT = 30            # seconds
 QDRANT_ENDPOINT = os.getenv("QDRANT_ENDPOINT", "http://localhost:6333")
 RAG_TOP_K = 5                   # Number of chunks to retrieve per query
 
+
+# ── PostgreSQL (short-term + long-term memory) ────────────────────────────────
+# Format: postgresql://user:password@host:port/dbname?sslmode=...
+# Used by:
+#   AsyncPostgresSaver → stores LangGraph checkpoints (conversation history)
+#   AsyncPostgresStore → stores long-term user memories (cross-session)
+PG_URI = os.getenv(
+    "PG_URI",
+    "postgresql://postgres:postgres@localhost:5432/agent_db?sslmode=disable"
+)
+
 # ── RAG chunking ──────────────────────────────────────────────────────────────
 CHUNK_SIZE = 800                # words per chunk
 CHUNK_OVERLAP = 150             # words overlap between chunks
