@@ -1,0 +1,45 @@
+services:
+  snekbox:
+    build:
+      context: ./snekbox
+      dockerfile: Dockerfile
+    privileged: true
+    ports:
+      - "8060:8060"
+    volumes:
+      - ./data/uploads:/data:ro
+    tmpfs:
+      - /tmp:exec,mode=1777
+    environment:
+      - USE_CGROUPV2=1
+      - SNEKBOX_EXTRA_BIND_MOUNTS=/data   # ← ADD THIS
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    restart: unless-stopped
+  # Optional: uncomment for horizontal scaling with nginx load balancer
+  # snekbox-2:
+  #   build:
+  #     context: ./snekbox
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./data/uploads:/data:ro
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 2G
+  #         cpus: "2.0"
+  #   restart: unless-stopped
+
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "8060:8060"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - snekbox
+  #     - snekbox-2
+  #   restart: unless-stopped
