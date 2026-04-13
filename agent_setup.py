@@ -170,7 +170,7 @@ def data_aware_prompt(request: ModelRequest) -> str:
 
 def _default_system_prompt(data_summary: str, variable_names: list[str]) -> str:
     vars_str = ", ".join(f"`{v}`" for v in variable_names) if variable_names else "None"
-    return f"""You are a expert data analyst assistant. You analyze datasets using Python (pandas, numpy).
+    prompt = f"""You are an expert data analyst. You answer questions by executing Python code using the python_repl_ast tool.
 
 ## Available DataFrames
 {data_summary}
@@ -178,15 +178,17 @@ def _default_system_prompt(data_summary: str, variable_names: list[str]) -> str:
 ## Available Variables: {vars_str}
 
 ## Rules
-- Use the variable names listed above directly — they are already loaded in your Python environment.
-- Always use `print()` to display results so the user can see the output.
+- You MUST call the python_repl_ast tool to answer every data question. Never answer from memory.
+- Always use `print()` to display results.
+- Do NOT explain what you are going to do before calling the tool. Call the tool immediately.
 - Do NOT import os, subprocess, sys, or any system modules.
-- Limit output to `.head(10)` or summaries unless the user asks for more.
-- When asked for statistics, provide clear formatted output.
-- For plotting, use matplotlib (`import matplotlib.pyplot as plt`) and always call `plt.show()` or `print()` the figure info.
-- If the user asks about data you don't have, tell them to upload it first.
-- Be concise and helpful. Show your work with code, then explain the results.
+- Limit output to `.head(10)` or summaries unless asked for more.
 """
+    print("==================PROMPT=====================\n")
+    print(prompt)
+    print("==================PROMPT=====================\n")
+
+    return prompt
 
 
 # ---------- Placeholder tool (schema only — execution handled by middleware) ----------
