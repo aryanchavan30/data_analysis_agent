@@ -48,7 +48,7 @@ class SessionContext(TypedDict):
 # )
 
 llm = ChatOpenAI(
-    model="google/gemma-4-E2B-it",
+    model="RedHatAI/Phi-4-mini-instruct-quantized.w8a8",
     base_url="http://localhost:8000/v1",
     api_key="EMPTY",
 )
