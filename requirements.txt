@@ -112,6 +112,8 @@ uvicorn==0.41.0
 watchfiles==1.1.1
 wcmatch==10.1
 websockets==16.0
+langchain-openai
 xxhash==3.6.0
 yarl==1.22.0
 zstandard==0.25.0
+langchain-openai
