@@ -4,6 +4,7 @@ from typing import TypedDict
 from langchain_core.messages import ToolMessage
 from langchain_experimental.tools import PythonAstREPLTool
 from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
 from langchain.agents.middleware import (
     ModelCallLimitMiddleware,
@@ -32,21 +33,28 @@ from session_store import store
 
 # ---------- Context schema ----------
 
+
 class SessionContext(TypedDict):
     session_id: str
 
 
 # ---------- LLM ----------
 
-llm = ChatGroq(
-    model=GROQ_MODEL,
-    api_key=GROQ_API_KEY,
-    temperature=0,
-    max_tokens=4096,
+# llm = ChatGroq(
+#     model=GROQ_MODEL,
+#     api_key=GROQ_API_KEY,
+#     temperature=0,
+#     max_tokens=4096,
+# )
+
+llm = ChatOpenAI(
+    model="aryanchavan/Phi-4-mini-instruct-FP8-Dynamic",
+    base_url="http://localhost:8000/v1",
+    api_key="EMPTY",
 )
 
-
 # ---------- Middleware #1: code_sandbox ----------
+
 
 @wrap_tool_call
 async def code_sandbox(request: ToolCallRequest, handler):
@@ -108,6 +116,7 @@ async def code_sandbox(request: ToolCallRequest, handler):
 
 # ---------- Middleware #2: session_tool_router ----------
 
+
 @wrap_tool_call
 async def session_tool_router(request: ToolCallRequest, handler):
     """Routes python_repl_ast execution to the correct per-session REPL tool."""
@@ -141,6 +150,7 @@ async def session_tool_router(request: ToolCallRequest, handler):
 
 
 # ---------- Middleware #3: data_aware_prompt ----------
+
 
 @dynamic_prompt
 def data_aware_prompt(request: ModelRequest) -> str:
